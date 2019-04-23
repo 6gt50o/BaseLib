@@ -7,7 +7,8 @@ import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.FileProvider;
-import android.util.Log;
+
+import com.qhh.baselib.image.callback.IRequestCaptureCallback;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -30,6 +31,8 @@ public class CaptureHelper {
 
     private static final String REQUEST_CAPTURE = "request_capture";
 
+    private IRequestCaptureCallback mIRequestCaptureCallback;
+
     private WeakReference<FragmentActivity> mWeakActivityRef;
 
     private static class SingletonHolder{
@@ -45,21 +48,15 @@ public class CaptureHelper {
         return SingletonHolder.INSTANCE;
     }
 
-    private RouterFragment getFragment(){
-        FragmentManager manager = mWeakActivityRef.get().getSupportFragmentManager();
-        RouterFragment fragment = (RouterFragment)manager.findFragmentByTag(REQUEST_CAPTURE);
-
-        if(fragment == null){
-            fragment = RouterFragment.getInstance();
-            manager.beginTransaction()
-                    .add(fragment,REQUEST_CAPTURE)
-                    .commitAllowingStateLoss();
-            manager.executePendingTransactions();
-        }
-
-        return fragment;
+    public CaptureHelper setIRequestCaptureCallback(IRequestCaptureCallback iRequestCaptureCallback){
+        mIRequestCaptureCallback = iRequestCaptureCallback;
+        return SingletonHolder.INSTANCE;
     }
 
+    /**
+     * 请求打开相机进行拍照
+     * @param savePath
+     */
     public void requestCapture(String savePath){
 
         final File captureFile = new File(savePath);
@@ -91,15 +88,33 @@ public class CaptureHelper {
         getFragment().startActivityFroResult(intent, new Callback() {
             @Override
             public void onActivityResult(int requestCode, int resultCode, Intent data) {
-                if(resultCode != RESULT_OK){
-                    return;
+                if(resultCode == RESULT_OK){
+                    String path = captureFile.getAbsolutePath();
+                    if(mIRequestCaptureCallback != null)
+                        mIRequestCaptureCallback.success(resultCode,path);
+                }else{
+                    if(mIRequestCaptureCallback != null)
+                        mIRequestCaptureCallback.error(resultCode);
                 }
 
-                String path = captureFile.getAbsolutePath();
-                Log.i("qhh","path = "+path);
             }
         });
 
+    }
+
+    private RouterFragment getFragment(){
+        FragmentManager manager = mWeakActivityRef.get().getSupportFragmentManager();
+        RouterFragment fragment = (RouterFragment)manager.findFragmentByTag(REQUEST_CAPTURE);
+
+        if(fragment == null){
+            fragment = RouterFragment.getInstance();
+            manager.beginTransaction()
+                    .add(fragment,REQUEST_CAPTURE)
+                    .commitAllowingStateLoss();
+            manager.executePendingTransactions();
+        }
+
+        return fragment;
     }
 
     public interface Callback{
