@@ -3,10 +3,20 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
-        android:allowBackup="false"
+        android:allowBackup="true"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <provider
+            android:authorities="com.qhh.baselib.image.provider"
+            android:name=".image.provider.CaptureProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/capture_file_path"/>
+        </provider>
 
     </application>
 
