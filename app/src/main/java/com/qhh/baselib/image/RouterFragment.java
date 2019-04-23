@@ -49,7 +49,7 @@ public class RouterFragment extends Fragment {
         return requestCode;
     }
 
-    public void startActivityFroResult(Intent intent,CaptureHelper.Callback callback){
+    public void startActivityforResult(Intent intent, CaptureHelper.Callback callback){
         int requestCode = createRequestCode();
         mCallBacks.put(requestCode, callback);
         startActivityForResult(intent, requestCode);

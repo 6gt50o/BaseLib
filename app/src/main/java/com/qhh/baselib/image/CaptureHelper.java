@@ -1,14 +1,18 @@
 package com.qhh.baselib.image;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.FileProvider;
+import android.text.TextUtils;
 
+import com.qhh.baselib.image.callback.IChoosePictureCallback;
 import com.qhh.baselib.image.callback.IRequestCaptureCallback;
+import com.qhh.baselib.utils.ImageUtils;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -32,6 +36,7 @@ public class CaptureHelper {
     private static final String REQUEST_CAPTURE = "request_capture";
 
     private IRequestCaptureCallback mIRequestCaptureCallback;
+    private IChoosePictureCallback mIChoosePictureCallback;
 
     private WeakReference<FragmentActivity> mWeakActivityRef;
 
@@ -48,13 +53,18 @@ public class CaptureHelper {
         return SingletonHolder.INSTANCE;
     }
 
-    public CaptureHelper setIRequestCaptureCallback(IRequestCaptureCallback iRequestCaptureCallback){
-        mIRequestCaptureCallback = iRequestCaptureCallback;
+    public CaptureHelper setIRequestCaptureCallback(IRequestCaptureCallback callback){
+        mIRequestCaptureCallback = callback;
+        return SingletonHolder.INSTANCE;
+    }
+
+    public CaptureHelper setIChoosePictureCallback(IChoosePictureCallback callback){
+        mIChoosePictureCallback = callback;
         return SingletonHolder.INSTANCE;
     }
 
     /**
-     * 请求打开相机进行拍照
+     * 打开相机进行拍照
      * @param savePath
      */
     public void requestCapture(String savePath){
@@ -85,7 +95,7 @@ public class CaptureHelper {
 
         }
 
-        getFragment().startActivityFroResult(intent, new Callback() {
+        getFragment().startActivityforResult(intent, new Callback() {
             @Override
             public void onActivityResult(int requestCode, int resultCode, Intent data) {
                 if(resultCode == RESULT_OK){
@@ -100,6 +110,102 @@ public class CaptureHelper {
             }
         });
 
+    }
+
+    /**
+     * 选择系统相册图片
+     */
+    public void chooseSysGallery(){
+
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_PICK);
+
+        getFragment().startActivityforResult(intent, new Callback(){
+            @Override
+            public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+                String fileSrc = null;
+
+                if(resultCode == RESULT_OK){
+
+                    if ("file".equals(data.getData().getScheme())) {
+                        // 有些低版本机型返回的Uri模式为file
+                        fileSrc = data.getData().getPath();
+                    } else {
+                        // Uri模型为content
+                        String[] proj = {MediaStore.Images.Media.DATA};
+                        Cursor cursor = mWeakActivityRef.get().getContentResolver().query(data.getData(), proj,
+                                null, null, null);
+                        cursor.moveToFirst();
+                        int idx = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                        fileSrc = cursor.getString(idx);
+                        cursor.close();
+                    }
+
+                    if(mIChoosePictureCallback != null)
+                        mIChoosePictureCallback.success(resultCode,fileSrc);
+
+                }else{
+                    if(mIChoosePictureCallback != null)
+                        mIChoosePictureCallback.error(resultCode);
+                }
+            }
+        });
+    }
+
+    /**
+     * 选择系统相册图片，并且存储到指定目录
+     * @param childFile 二级文件夹
+     * @param fileName 最终文件名称
+     */
+    public void chooseSysGallery(final String childFile, final String fileName, final int quality){
+
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_PICK);
+
+        getFragment().startActivityforResult(intent, new Callback(){
+            @Override
+            public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+                String fileSrc = null;
+
+                if(resultCode == RESULT_OK){
+
+                    if ("file".equals(data.getData().getScheme())) {
+                        // 有些低版本机型返回的Uri模式为file
+                        fileSrc = data.getData().getPath();
+                    } else {
+                        // Uri模型为content
+                        String[] proj = {MediaStore.Images.Media.DATA};
+                        Cursor cursor = mWeakActivityRef.get().getContentResolver().query(data.getData(), proj,
+                                null, null, null);
+                        cursor.moveToFirst();
+                        int idx = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                        fileSrc = cursor.getString(idx);
+                        cursor.close();
+                    }
+
+                    String picPath = ImageUtils.getInstance().compressPic(mWeakActivityRef.get(),
+                            fileSrc, quality, childFile, fileName);
+
+                    if(!TextUtils.isEmpty(picPath)){
+
+                        if(mIChoosePictureCallback != null)
+                            mIChoosePictureCallback.success(resultCode,picPath);
+
+                    }else{
+                        if(mIChoosePictureCallback != null)
+                            mIChoosePictureCallback.error(resultCode);
+                    }
+
+                }else{
+                    if(mIChoosePictureCallback != null)
+                        mIChoosePictureCallback.error(resultCode);
+                }
+            }
+        });
     }
 
     private RouterFragment getFragment(){
