@@ -223,6 +223,20 @@ public class CaptureHelper {
         return fragment;
     }
 
+    public void release(){
+        FragmentManager manager = mWeakActivityRef.get().getSupportFragmentManager();
+        RouterFragment fragment = (RouterFragment)manager.findFragmentByTag(REQUEST_CAPTURE);
+
+        if(fragment == null){
+            fragment = RouterFragment.getInstance();
+            manager.beginTransaction()
+                    .remove(fragment)
+                    .commitAllowingStateLoss();
+            manager.executePendingTransactions();
+        }
+        mWeakActivityRef.clear();
+    }
+
     public interface Callback{
         void onActivityResult(int requestCode, int resultCode, Intent data);
     }
