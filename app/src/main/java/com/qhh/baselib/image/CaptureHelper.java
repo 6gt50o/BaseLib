@@ -41,7 +41,7 @@ public class CaptureHelper {
     private WeakReference<FragmentActivity> mWeakActivityRef;
 
     private static class SingletonHolder{
-         private static final CaptureHelper INSTANCE = new CaptureHelper();
+         private static CaptureHelper INSTANCE = new CaptureHelper();
     }
 
     public static CaptureHelper getInstance(){
@@ -227,13 +227,14 @@ public class CaptureHelper {
         FragmentManager manager = mWeakActivityRef.get().getSupportFragmentManager();
         RouterFragment fragment = (RouterFragment)manager.findFragmentByTag(REQUEST_CAPTURE);
 
-        if(fragment == null){
+        if(fragment != null){
             fragment = RouterFragment.getInstance();
             manager.beginTransaction()
                     .remove(fragment)
                     .commitAllowingStateLoss();
             manager.executePendingTransactions();
         }
+        SingletonHolder.INSTANCE = null;
         mWeakActivityRef.clear();
     }
 
