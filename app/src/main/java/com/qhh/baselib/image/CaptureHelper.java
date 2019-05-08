@@ -40,27 +40,33 @@ public class CaptureHelper {
 
     private WeakReference<FragmentActivity> mWeakActivityRef;
 
-    private static class SingletonHolder{
-         private static CaptureHelper INSTANCE = new CaptureHelper();
-    }
-
-    public static CaptureHelper getInstance(){
-        return SingletonHolder.INSTANCE;
+    
+    private static CaptureHelper instance;
+    
+    public static CaptureHelper getInstance() {
+        if (instance == null) {
+            synchronized (CaptureHelper.class) {
+                if (instance == null) {
+                    instance = new CaptureHelper();
+                }
+            }
+        }
+        return instance;
     }
 
     public CaptureHelper init(FragmentActivity activity){
         mWeakActivityRef = new WeakReference<>(activity);
-        return SingletonHolder.INSTANCE;
+        return instance;
     }
 
     public CaptureHelper setIRequestCaptureCallback(IRequestCaptureCallback callback){
         mIRequestCaptureCallback = callback;
-        return SingletonHolder.INSTANCE;
+        return instance;
     }
 
     public CaptureHelper setIChoosePictureCallback(IChoosePictureCallback callback){
         mIChoosePictureCallback = callback;
-        return SingletonHolder.INSTANCE;
+        return instance;
     }
 
     /**
@@ -234,7 +240,7 @@ public class CaptureHelper {
                     .commitAllowingStateLoss();
             manager.executePendingTransactions();
         }
-        SingletonHolder.INSTANCE = null;
+        instance = null;
         mWeakActivityRef.clear();
     }
 
