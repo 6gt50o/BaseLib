@@ -232,7 +232,7 @@ public class CaptureHelper {
 
     public void release(){
 
-        if(mWeakActivityRef.get() != null){
+        if(mWeakActivityRef != null && mWeakActivityRef.get() != null){
 
             FragmentManager manager = mWeakActivityRef.get().getSupportFragmentManager();
             RouterFragment fragment = (RouterFragment)manager.findFragmentByTag(REQUEST_CAPTURE);
