@@ -215,6 +215,7 @@ public class CaptureHelper {
     }
 
     private RouterFragment getFragment(){
+
         FragmentManager manager = mWeakActivityRef.get().getSupportFragmentManager();
         RouterFragment fragment = (RouterFragment)manager.findFragmentByTag(REQUEST_CAPTURE);
 
@@ -230,18 +231,24 @@ public class CaptureHelper {
     }
 
     public void release(){
-        FragmentManager manager = mWeakActivityRef.get().getSupportFragmentManager();
-        RouterFragment fragment = (RouterFragment)manager.findFragmentByTag(REQUEST_CAPTURE);
 
-        if(fragment != null){
-            fragment = RouterFragment.getInstance();
-            manager.beginTransaction()
-                    .remove(fragment)
-                    .commitAllowingStateLoss();
-            manager.executePendingTransactions();
+        if(mWeakActivityRef.get() != null){
+
+            FragmentManager manager = mWeakActivityRef.get().getSupportFragmentManager();
+            RouterFragment fragment = (RouterFragment)manager.findFragmentByTag(REQUEST_CAPTURE);
+
+            if(fragment != null){
+                fragment = RouterFragment.getInstance();
+                manager.beginTransaction()
+                        .remove(fragment)
+                        .commitAllowingStateLoss();
+                manager.executePendingTransactions();
+            }
+            instance = null;
+            mWeakActivityRef.clear();
+
         }
-        instance = null;
-        mWeakActivityRef.clear();
+
     }
 
     public interface Callback{
